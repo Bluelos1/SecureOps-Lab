@@ -1,0 +1,7 @@
+﻿services:
+  secureops labsecureopslab:
+    image: secureops labsecureopslab
+    build:
+      context: .
+      dockerfile: SecureOps Lab/Dockerfile
+
