@@ -1,7 +1,67 @@
 ﻿services:
-  secureops labsecureopslab:
-    image: secureops labsecureopslab
+  api:
     build:
       context: .
-      dockerfile: SecureOps Lab/Dockerfile
+      dockerfile: src/SecureOpsLab.Api/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__Postgres: Host=postgres;Port=5432;Database=secureops_lab;Username=secureops;Password=secureops_lab_password
+      SecurityLab__Vulnerabilities__A01BrokenAccessControl: "false"
+      SecurityLab__Vulnerabilities__A03Injection: "true"
+      SecurityLab__Vulnerabilities__A05SecurityMisconfiguration: "true"
+      SecurityLab__Vulnerabilities__A10ServerSideRequestForgery: "true"
+      SecurityLab__ObjectStorage__ServiceUrl: http://localstack:4566
+      SecurityLab__ObjectStorage__Region: us-east-1
+      SecurityLab__ObjectStorage__BucketName: secureops-lab-documents
+      SecurityLab__ObjectStorage__AccessKey: test
+      SecurityLab__ObjectStorage__SecretKey: test
+      SecurityLab__CloudLogging__ServiceUrl: http://localstack:4566
+      SecurityLab__CloudLogging__Region: us-east-1
+      SecurityLab__CloudLogging__LogGroupName: /secureops-lab/security-events
+      SecurityLab__CloudLogging__LogStreamName: lab-runtime
+      SecurityLab__CloudLogging__AccessKey: test
+      SecurityLab__CloudLogging__SecretKey: test
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      localstack:
+        condition: service_healthy
 
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: secureops_lab
+      POSTGRES_USER: secureops
+      POSTGRES_PASSWORD: secureops_lab_password
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U secureops -d secureops_lab"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  localstack:
+    image: localstack/localstack:3.8.1
+    environment:
+      SERVICES: s3,logs
+      AWS_DEFAULT_REGION: us-east-1
+      DEBUG: "0"
+    ports:
+      - "4566:4566"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:4566/_localstack/health >/dev/null"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    volumes:
+      - localstack-data:/var/lib/localstack
+
+volumes:
+  postgres-data:
+  localstack-data:

@@ -1,6 +1,50 @@
-@SecureOpsLab.Api_HostAddress = http://localhost:5262
+@SecureOpsLab.Api_HostAddress = http://localhost:8080
+@AliceId = 11111111-1111-1111-1111-111111111111
+@BobDocumentId = bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb
+@SqlInjectionPayload = %27%20OR%201%3D1%20--
+@SsrfTarget = http%3A%2F%2Flocalstack%3A4566%2F_localstack%2Fhealth
 
-GET {{SecureOpsLab.Api_HostAddress}}/weatherforecast/
+GET {{SecureOpsLab.Api_HostAddress}}/health
+Accept: application/json
+
+###
+
+GET {{SecureOpsLab.Api_HostAddress}}/api/vulnerabilities
+Accept: application/json
+
+###
+
+GET {{SecureOpsLab.Api_HostAddress}}/api/vulnerabilities/a01-broken-access-control/documents/{{BobDocumentId}}
+Accept: application/json
+X-Lab-User-Id: {{AliceId}}
+
+###
+
+GET {{SecureOpsLab.Api_HostAddress}}/api/vulnerabilities/a03-injection/documents/search?term=Alice
+Accept: application/json
+X-Lab-User-Id: {{AliceId}}
+
+###
+
+GET {{SecureOpsLab.Api_HostAddress}}/api/vulnerabilities/a03-injection/documents/search?term={{SqlInjectionPayload}}
+Accept: application/json
+X-Lab-User-Id: {{AliceId}}
+
+###
+
+GET {{SecureOpsLab.Api_HostAddress}}/api/vulnerabilities/a05-security-misconfiguration/objects/{{BobDocumentId}}
+Accept: application/json
+X-Lab-User-Id: {{AliceId}}
+
+###
+
+GET {{SecureOpsLab.Api_HostAddress}}/api/vulnerabilities/a10-ssrf/fetch?url={{SsrfTarget}}
+Accept: application/json
+X-Lab-User-Id: {{AliceId}}
+
+###
+
+GET {{SecureOpsLab.Api_HostAddress}}/api/detections/cloud
 Accept: application/json
 
 ###
