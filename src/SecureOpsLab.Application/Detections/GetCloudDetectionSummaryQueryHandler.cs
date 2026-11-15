@@ -5,6 +5,21 @@ namespace SecureOpsLab.Application.Detections;
 
 public sealed class GetCloudDetectionSummaryQueryHandler
 {
+    private static readonly IReadOnlyDictionary<string, string> AlertMessages = new Dictionary<string, string>(StringComparer.Ordinal)
+    {
+        ["CrossOwnerDocumentRead"] = "User received a lab document owned by another user.",
+        ["CrossOwnerDocumentList"] = "User listed lab documents owned by another user.",
+        ["SensitiveSecretDisclosure"] = "Endpoint returned plaintext secret material.",
+        ["SqlInjectionSearchBypass"] = "Injected search term returned documents owned by another user.",
+        ["BusinessRuleBypass"] = "Business workflow granted access without required approval.",
+        ["CrossOwnerObjectRead"] = "User received a LocalStack S3 object for another user's document.",
+        ["VulnerableComponentExploit"] = "Simulated legacy component accepted an exploit marker.",
+        ["DefaultCredentialLogin"] = "Default lab credential was accepted for authentication.",
+        ["UnsignedUpdateAccepted"] = "Unsigned update package was accepted by the update workflow.",
+        ["ServerSideRequestForgery"] = "Server fetched an internal or cloud-local endpoint controlled by user input.",
+        ["SuspiciousHttpInput"] = "Generic HTTP detector matched suspicious request input."
+    };
+
     private readonly ILabCloudAuditLog _cloudAuditLog;
 
     public GetCloudDetectionSummaryQueryHandler(ILabCloudAuditLog cloudAuditLog)
@@ -36,13 +51,7 @@ public sealed class GetCloudDetectionSummaryQueryHandler
 
     private static bool IsAlert(LabCloudAuditEvent auditEvent)
     {
-        return auditEvent.EventType is
-            "CrossOwnerDocumentRead" or
-            "CrossOwnerDocumentList" or
-            "SqlInjectionSearchBypass" or
-            "CrossOwnerObjectRead" or
-            "ServerSideRequestForgery" or
-            "SuspiciousHttpInput";
+        return AlertMessages.ContainsKey(auditEvent.EventType);
     }
 
     private static CloudDetectionAlertResponse ToAlert(LabCloudAuditEvent auditEvent)
@@ -63,16 +72,7 @@ public sealed class GetCloudDetectionSummaryQueryHandler
 
     private static string BuildMessage(LabCloudAuditEvent auditEvent)
     {
-        return auditEvent.EventType switch
-        {
-            "CrossOwnerDocumentRead" => "User received a lab document owned by another user.",
-            "CrossOwnerDocumentList" => "User listed lab documents owned by another user.",
-            "SqlInjectionSearchBypass" => "Injected search term returned documents owned by another user.",
-            "CrossOwnerObjectRead" => "User received a LocalStack S3 object for another user's document.",
-            "ServerSideRequestForgery" => "Server fetched an internal or cloud-local endpoint controlled by user input.",
-            "SuspiciousHttpInput" => "Generic HTTP detector matched suspicious request input.",
-            _ => auditEvent.Details
-        };
+        return AlertMessages.GetValueOrDefault(auditEvent.EventType, auditEvent.Details);
     }
 
     private static CloudAuditEventResponse ToEventResponse(LabCloudAuditEvent auditEvent)

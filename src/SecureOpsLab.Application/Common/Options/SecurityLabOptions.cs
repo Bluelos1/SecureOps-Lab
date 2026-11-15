@@ -12,8 +12,14 @@ public sealed class SecurityLabOptions
 public sealed class VulnerabilityOptions
 {
     public bool A01BrokenAccessControl { get; set; }
+    public bool A02CryptographicFailures { get; set; }
     public bool A03Injection { get; set; }
+    public bool A04InsecureDesign { get; set; }
     public bool A05SecurityMisconfiguration { get; set; }
+    public bool A06VulnerableComponents { get; set; }
+    public bool A07IdentificationAuthenticationFailures { get; set; }
+    public bool A08SoftwareDataIntegrityFailures { get; set; }
+    public bool A09SecurityLoggingMonitoringFailures { get; set; }
     public bool A10ServerSideRequestForgery { get; set; }
 }
 

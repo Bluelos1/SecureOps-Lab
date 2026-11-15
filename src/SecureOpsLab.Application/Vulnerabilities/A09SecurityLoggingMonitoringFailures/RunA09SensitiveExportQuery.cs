@@ -1,0 +1,3 @@
+namespace SecureOpsLab.Application.Vulnerabilities.A09SecurityLoggingMonitoringFailures;
+
+public sealed record RunA09SensitiveExportQuery(Guid CurrentUserId);

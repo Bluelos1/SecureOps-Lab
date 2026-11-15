@@ -8,6 +8,19 @@ const documents = {
   bob: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
 };
 
+const moduleIds = {
+  a01Idor: "A01-IDOR",
+  a02Crypto: "A02-CRYPTO",
+  a03Sqli: "A03-SQLI",
+  a04Design: "A04-DESIGN",
+  a05S3: "A05-S3",
+  a06Components: "A06-COMPONENTS",
+  a07Auth: "A07-AUTH",
+  a08Integrity: "A08-INTEGRITY",
+  a09Logging: "A09-LOGGING",
+  a10Ssrf: "A10-SSRF"
+};
+
 const moduleStatus = document.querySelector("#moduleStatus");
 const modeExplanation = document.querySelector("#modeExplanation");
 const moduleDetails = document.querySelector("#moduleDetails");
@@ -19,31 +32,37 @@ const documentIdInput = document.querySelector("#documentId");
 const objectDocumentIdInput = document.querySelector("#objectDocumentId");
 const ssrfTargetUrlInput = document.querySelector("#ssrfTargetUrl");
 const searchTermInput = document.querySelector("#searchTerm");
+const componentPayloadInput = document.querySelector("#componentPayload");
+const defaultPasswordInput = document.querySelector("#defaultPassword");
+const packageUrlInput = document.querySelector("#packageUrl");
 const finding = document.querySelector("#finding");
 
-let a01Enabled = null;
-let a03Enabled = null;
-let a05Enabled = null;
-let a10Enabled = null;
+const moduleModes = new Map();
 
-document.querySelector("#refreshModules").addEventListener("click", loadModules);
-document.querySelector("#loadDocuments").addEventListener("click", loadDocuments);
-document.querySelector("#readAliceDocument").addEventListener("click", () => readDocument(documents.alice));
-document.querySelector("#readBobDocument").addEventListener("click", () => readDocument(documents.bob));
-document.querySelector("#runIdorProof").addEventListener("click", () => readDocument(documents.bob, users.alice));
-document.querySelector("#readCustomDocument").addEventListener("click", () => readDocument(documentIdInput.value.trim()));
-document.querySelector("#searchDocuments").addEventListener("click", () => searchDocuments(searchTermInput.value));
-document.querySelector("#readAliceObject").addEventListener("click", () => readObject(documents.alice));
-document.querySelector("#readBobObject").addEventListener("click", () => readObject(documents.bob));
-document.querySelector("#runObjectStorageProof").addEventListener("click", () => readObject(documents.bob, users.alice));
-document.querySelector("#readCustomObject").addEventListener("click", () => readObject(objectDocumentIdInput.value.trim()));
-document.querySelector("#fetchTargetUrl").addEventListener("click", () => fetchTargetUrl(ssrfTargetUrlInput.value.trim()));
-document.querySelector("#runSsrfProof").addEventListener("click", () => {
+onClick("#refreshModules", loadModules);
+onClick("#loadDocuments", loadDocuments);
+onClick("#readAliceDocument", () => readDocument(documents.alice));
+onClick("#readBobDocument", () => readDocument(documents.bob));
+onClick("#runIdorProof", () => readDocument(documents.bob, users.alice));
+onClick("#readCustomDocument", () => readDocument(documentIdInput.value.trim()));
+onClick("#searchDocuments", () => searchDocuments(searchTermInput.value));
+onClick("#runCryptoProof", runCryptoProof);
+onClick("#runDesignProof", runDesignProof);
+onClick("#readAliceObject", () => readObject(documents.alice));
+onClick("#readBobObject", () => readObject(documents.bob));
+onClick("#runObjectStorageProof", () => readObject(documents.bob, users.alice));
+onClick("#readCustomObject", () => readObject(objectDocumentIdInput.value.trim()));
+onClick("#fetchTargetUrl", () => fetchTargetUrl(ssrfTargetUrlInput.value.trim()));
+onClick("#runComponentProof", () => runComponentProof(componentPayloadInput.value.trim()));
+onClick("#runAuthProof", () => runAuthProof(defaultPasswordInput.value.trim()));
+onClick("#runIntegrityProof", () => runIntegrityProof(packageUrlInput.value.trim()));
+onClick("#runLoggingProof", runLoggingProof);
+onClick("#runSsrfProof", () => {
   ssrfTargetUrlInput.value = "http://localstack:4566/_localstack/health";
   fetchTargetUrl(ssrfTargetUrlInput.value);
 });
-document.querySelector("#loadCloudDetections").addEventListener("click", loadCloudDetections);
-document.querySelector("#runSqlInjection").addEventListener("click", () => {
+onClick("#loadCloudDetections", loadCloudDetections);
+onClick("#runSqlInjection", () => {
   searchTermInput.value = "' OR 1=1 --";
   searchDocuments(searchTermInput.value);
 });
@@ -54,6 +73,10 @@ for (const input of document.querySelectorAll("input[name='labUser']")) {
     responseStatus.className = "badge badge-muted";
     setFinding("The selected user changed. Run a scenario to interpret the result.", "muted");
   });
+}
+
+function onClick(selector, handler) {
+  document.querySelector(selector).addEventListener("click", handler);
 }
 
 function getCurrentUserId() {
@@ -93,25 +116,20 @@ async function loadModules() {
   try {
     const result = await request("/api/vulnerabilities");
     const modules = Array.isArray(result.body) ? result.body : [];
-    const a01Module = modules.find(x => x.id === "A01-IDOR");
-    const a03Module = modules.find(x => x.id === "A03-SQLI");
-    const a05Module = modules.find(x => x.id === "A05-S3");
-    const a10Module = modules.find(x => x.id === "A10-SSRF");
-
     if (modules.length === 0) {
       setBadge(moduleStatus, "No modules", "muted");
       moduleDetails.innerHTML = "";
       return;
     }
 
-    a01Enabled = a01Module?.enabled ?? false;
-    a03Enabled = a03Module?.enabled ?? false;
-    a05Enabled = a05Module?.enabled ?? false;
-    a10Enabled = a10Module?.enabled ?? false;
+    moduleModes.clear();
+    for (const module of modules) {
+      moduleModes.set(module.id, module.enabled);
+    }
 
     const enabledCount = modules.filter(x => x.enabled).length;
     setBadge(moduleStatus, `${enabledCount}/${modules.length} vulnerable`, enabledCount > 0 ? "on" : "off");
-    modeExplanation.innerHTML = buildModeExplanation(a01Module, a03Module, a05Module, a10Module);
+    modeExplanation.innerHTML = buildModeExplanation(modules);
     moduleDetails.replaceChildren(...modules.map(moduleSummary));
   } catch (error) {
     setBadge(moduleStatus, "API error", "off");
@@ -178,6 +196,40 @@ async function readObject(documentId, userId = getCurrentUserId()) {
       userId);
     updateResponse(result);
     interpretObjectRead(result);
+  } catch (error) {
+    updateError(error);
+  }
+}
+
+async function runCryptoProof() {
+  await runVulnerabilityScenario("/api/vulnerabilities/a02-cryptographic-failures/secrets/export");
+}
+
+async function runDesignProof() {
+  await runVulnerabilityScenario("/api/vulnerabilities/a04-insecure-design/emergency-access");
+}
+
+async function runComponentProof(payload) {
+  await runVulnerabilityScenario(`/api/vulnerabilities/a06-vulnerable-components/render?payload=${encodeURIComponent(payload)}`);
+}
+
+async function runAuthProof(password) {
+  await runVulnerabilityScenario(`/api/vulnerabilities/a07-identification-authentication/default-login?password=${encodeURIComponent(password)}`);
+}
+
+async function runIntegrityProof(packageUrl) {
+  await runVulnerabilityScenario(`/api/vulnerabilities/a08-software-data-integrity/update?packageUrl=${encodeURIComponent(packageUrl)}`);
+}
+
+async function runLoggingProof() {
+  await runVulnerabilityScenario("/api/vulnerabilities/a09-logging-monitoring/admin-export");
+}
+
+async function runVulnerabilityScenario(path) {
+  try {
+    const result = await request(path);
+    updateResponse(result);
+    interpretVulnerabilityScenario(result);
   } catch (error) {
     updateError(error);
   }
@@ -397,7 +449,7 @@ function interpretSqlSearch(result, searchTerm) {
     return;
   }
 
-  if (isInjectionPayload && a03Enabled === false) {
+  if (isInjectionPayload && moduleModes.get(moduleIds.a03Sqli) === false) {
     setFinding(
       "The injection payload did not bypass owner filtering. That is the expected safe behavior for A03 disabled.",
       "safe");
@@ -495,24 +547,50 @@ function interpretServerSideFetch(result) {
     "safe");
 }
 
-function buildModeExplanation(a01Module, a03Module, a05Module, a10Module) {
-  const a01Text = a01Module?.enabled
-    ? "A01 IDOR is vulnerable: cross-user reads can return HTTP 200."
-    : "A01 IDOR is safe: cross-user reads should return HTTP 404.";
+function interpretVulnerabilityScenario(result) {
+  if (!result.body || typeof result.body !== "object") {
+    setFinding("The OWASP scenario response cannot be interpreted.", "muted");
+    return;
+  }
 
-  const a03Text = a03Module?.enabled
-    ? "A03 SQLi is vulnerable: an injected search term can bypass owner filtering."
-    : "A03 SQLi is safe: search terms are handled through EF filtering.";
+  const body = result.body;
+  const cloudText = body.cloudEventWritten
+    ? "A CloudWatch Logs event was written."
+    : "No CloudWatch Logs event was written.";
 
-  const a05Text = a05Module?.enabled
-    ? "A05 S3 is vulnerable: cross-user LocalStack object reads can return HTTP 200."
-    : "A05 S3 is safe: object reads require document ownership.";
+  if (body.scenarioId === moduleIds.a09Logging && body.exploited && !body.cloudEventWritten) {
+    setFinding(
+      `<strong>A09 logging failure confirmed.</strong> The sensitive action completed without detection telemetry. ${escapeHtml(body.evidence)}`,
+      "confirmed");
+    return;
+  }
 
-  const a10Text = a10Module?.enabled
-    ? "A10 SSRF is vulnerable: server-side fetches can reach internal LocalStack endpoints."
-    : "A10 SSRF is safe: internal targets are blocked before fetch.";
+  if (body.exploited) {
+    setFinding(
+      `<strong>${escapeHtml(body.scenarioId)} confirmed.</strong> ${escapeHtml(body.evidence)} ${cloudText}`,
+      "confirmed");
+    return;
+  }
 
-  return `<strong>Current lab mode.</strong> ${a01Text} ${a03Text} ${a05Text} ${a10Text}`;
+  if (body.blocked) {
+    setFinding(
+      `<strong>${escapeHtml(body.scenarioId)} blocked.</strong> ${escapeHtml(body.safeControl)} ${cloudText}`,
+      "safe");
+    return;
+  }
+
+  setFinding(
+    `<strong>${escapeHtml(body.scenarioId)} control path.</strong> ${escapeHtml(body.evidence)} ${cloudText}`,
+    "safe");
+}
+
+function buildModeExplanation(modules) {
+  const vulnerable = modules.filter(x => x.enabled).map(x => x.id);
+  const safe = modules.filter(x => !x.enabled).map(x => x.id);
+  const vulnerableText = vulnerable.length > 0 ? vulnerable.join(", ") : "none";
+  const safeText = safe.length > 0 ? safe.join(", ") : "none";
+
+  return `<strong>Current lab mode.</strong> Vulnerable: ${escapeHtml(vulnerableText)}. Safe: ${escapeHtml(safeText)}.`;
 }
 
 function moduleSummary(module) {

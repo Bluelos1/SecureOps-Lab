@@ -8,8 +8,14 @@
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__Postgres: Host=postgres;Port=5432;Database=secureops_lab;Username=secureops;Password=secureops_lab_password
       SecurityLab__Vulnerabilities__A01BrokenAccessControl: "false"
+      SecurityLab__Vulnerabilities__A02CryptographicFailures: "true"
       SecurityLab__Vulnerabilities__A03Injection: "true"
+      SecurityLab__Vulnerabilities__A04InsecureDesign: "true"
       SecurityLab__Vulnerabilities__A05SecurityMisconfiguration: "true"
+      SecurityLab__Vulnerabilities__A06VulnerableComponents: "true"
+      SecurityLab__Vulnerabilities__A07IdentificationAuthenticationFailures: "true"
+      SecurityLab__Vulnerabilities__A08SoftwareDataIntegrityFailures: "true"
+      SecurityLab__Vulnerabilities__A09SecurityLoggingMonitoringFailures: "true"
       SecurityLab__Vulnerabilities__A10ServerSideRequestForgery: "true"
       SecurityLab__ObjectStorage__ServiceUrl: http://localstack:4566
       SecurityLab__ObjectStorage__Region: us-east-1
